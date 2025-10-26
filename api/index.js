@@ -1,74 +1,27 @@
-// ✅ Main backend API entry (Vercel auto-detects this file)
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
 
-import fs from "fs";
-import path from "path";
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const dbPath = path.join(process.cwd(), "data.json");
+// Serve frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔸 Helper: load local JSON DB (for saving notes)
-function loadDB() {
-  try {
-    if (!fs.existsSync(dbPath)) return {};
-    const data = fs.readFileSync(dbPath, "utf8");
-    return JSON.parse(data || "{}");
-  } catch (e) {
-    return {};
-  }
-}
+// Optional API route to save receipt data
+app.post('/api/save', (req, res) => {
+    const data = req.body;
+    console.log('Received receipt data:', data);
+    // Here you can save to DB or file
+    res.json({ status: 'success', message: 'Receipt saved' });
+});
 
-// 🔸 Helper: save JSON DB
-function saveDB(db) {
-  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
-}
+// Fallback: serve index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-// 🔸 Main handler
-export default async function handler(req, res) {
-  const { url, method } = req;
-
-  // 🟢 1️⃣ VALIDATE KEY
-  if (url === "/validate-key" && method === "POST") {
-    const body = await readJSON(req);
-    if (body.key === "MOMIN100") {
-      return res.status(200).json({ success: true, message: "Login successful" });
-    } else {
-      return res.status(401).json({ success: false, message: "Invalid key" });
-    }
-  }
-
-  // 🟢 2️⃣ SAVE DATA
-  if (url === "/save-data" && method === "POST") {
-    const body = await readJSON(req);
-    const db = loadDB();
-    db[body.deviceID] = { notes: body.notes, updated: new Date().toISOString() };
-    saveDB(db);
-    return res.status(200).json({ success: true });
-  }
-
-  // 🟢 3️⃣ LOAD DATA
-  if (url.startsWith("/load-data") && method === "GET") {
-    const deviceID = new URL(req.url, "http://localhost").searchParams.get("deviceID");
-    const db = loadDB();
-    return res.status(200).json(db[deviceID] || {});
-  }
-
-  // 🟢 DEFAULT
-  return res.status(200).json({
-    success: true,
-    message: "✅ Momin Receipt Backend Running Successfully!",
-  });
-}
-
-// 🔹 Helper to read JSON body
-async function readJSON(req) {
-  return new Promise((resolve) => {
-    let data = "";
-    req.on("data", (chunk) => (data += chunk));
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(data || "{}"));
-      } catch {
-        resolve({});
-      }
-    });
-  });
-}
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

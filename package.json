@@ -1,13 +1,14 @@
 {
-  "name": "momin-receipt-backend",
+  "name": "momin-receipt",
   "version": "1.0.0",
-  "type": "module",
-  "main": "server.js",
+  "description": "Backend for Momin Receipt app",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
   }
 }
